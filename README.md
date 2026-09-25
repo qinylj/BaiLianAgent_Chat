@@ -11,7 +11,7 @@
 ## 一、快速开始
 
 ```bash
-cd agent-chat
+cd BaiLianAgent_Chat
 node server.mjs
 ```
 
