@@ -1,0 +1,17 @@
+{
+  "name": "agent-chat",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "阿里百炼智能体对话 UI：多轮对话、历史保存、可换背景、链接传参、多智能体",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs",
+    "mock": "node server.mjs",
+    "clean:history": "node scripts/clean-history.mjs",
+    "clean:history:run": "node scripts/clean-history.mjs --yes"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "port": 5178,
+  "host": "127.0.0.1",
+  "mock": true,
+
+  "gateway": {
+    "baseUrl": "",
+    "apiKey": "",
+    "timeoutMs": 120000,
+    "paths": {
+      "createSession": "/createSession",
+      "run": "/run",
+      "clearSession": "/clearSession",
+      "deleteSession": "/deleteSession",
+      "feedback": "/feedback",
+      "taskFinishNotice": "/taskFinishNotice"
+    }
+  },
+
+  "history": {
+    "serverSide": true
+  },
+
+  "embed": {
+    "enabled": true,
+    "allowOrigins": [],
+    "allowAllOrigins": false
+  },
+
+  "cors": {
+    "allowOrigins": []
+  },
+
+  "tool": {
+    "callbackToken": ""
+  },
+
+  "ui": {
+    "defaultBackground": "cockpit",
+    "defaultTheme": "cockpit"
+  }
+}

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>驾驶舱集成示例 · 智能体对话</title>
+<style>
+  /* 这是一个「宿主大屏」示例：复刻参考大屏的面板语言（深海军蓝底 / 发光标题条 /
+     两端青色箭头 / 青边面板），把智能体对话框嵌在其中一个面板里。
+     你只需要照抄下面 .panel 和 iframe 的写法即可。 */
+  :root {
+    --bg: #050e1c;
+    --panel: rgba(9, 28, 48, 0.78);
+    --card: rgba(39, 70, 101, 0.52);
+    --border: rgba(70, 165, 235, 0.22);
+    --border-strong: rgba(90, 190, 255, 0.42);
+    --text: #eaf6ff;
+    --text-dim: #a8c1d0;
+    --text-faint: #6b8ba3;
+    --accent: #22c2e8;
+    --header-grad:
+      radial-gradient(ellipse 34% 260% at 50% 50%, rgba(6, 176, 154, 0.5), rgba(6, 176, 154, 0) 76%),
+      radial-gradient(ellipse 62% 280% at 50% 50%, rgba(2, 136, 206, 0.44), rgba(2, 136, 206, 0) 78%),
+      linear-gradient(90deg, #06304e 0%, #0a4a75 50%, #06304e 100%);
+    --chevron: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='44' height='15' viewBox='0 0 44 15'><g fill='none' stroke='%2342d8f0' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'><path d='M2 2.2l5 5.3-5 5.3'/><path d='M17 2.2l5 5.3-5 5.3'/><path d='M32 2.2l5 5.3-5 5.3'/></g></svg>");
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', system-ui, sans-serif;
+    color: var(--text); font-size: 13px;
+    background:
+      radial-gradient(1400px 700px at 50% -14%, rgba(4, 132, 186, 0.3), transparent 62%),
+      radial-gradient(1000px 760px at 4% 108%, rgba(4, 110, 160, 0.24), transparent 60%),
+      linear-gradient(rgba(90, 180, 255, 0.05) 1px, transparent 1px) 0 0 / 48px 48px,
+      linear-gradient(90deg, rgba(90, 180, 255, 0.05) 1px, transparent 1px) 0 0 / 48px 48px,
+      var(--bg);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+
+  /* ---------- 顶部大标题（大屏的做法：居中 + 两侧渐变装饰线） ---------- */
+  .topbar {
+    position: relative; flex: 0 0 auto; height: 58px;
+    display: grid; place-items: center;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, rgba(5, 40, 71, 0.9), rgba(10, 74, 117, 0.55), rgba(5, 40, 71, 0.9));
+  }
+  .topbar h1 {
+    margin: 0; font-size: 21px; font-weight: 700; letter-spacing: 0.14em;
+    text-shadow: 0 0 18px rgba(34, 194, 232, 0.6);
+  }
+  .topbar::before, .topbar::after {
+    content: ''; position: absolute; top: 50%; width: 26%; height: 1px; transform: translateY(-50%);
+    background: linear-gradient(90deg, transparent, rgba(34, 194, 232, 0.7));
+  }
+  .topbar::before { left: 3%; }
+  .topbar::after { right: 3%; transform: translateY(-50%) scaleX(-1); }
+  .topbar .back {
+    position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+    font-size: 12px; color: var(--text-dim); border: 1px solid var(--border);
+    border-radius: 4px; padding: 4px 10px; background: rgba(3, 20, 34, 0.4);
+  }
+
+  /* ---------- 面板：大屏的标准容器 ---------- */
+  .grid {
+    flex: 1; min-height: 0; display: grid; gap: 12px; padding: 12px;
+    grid-template-columns: 380px minmax(0, 1fr);
+  }
+  .col { min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+  .panel {
+    display: flex; flex-direction: column; min-height: 0;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: inset 0 1px 0 rgba(120, 220, 255, 0.1), 0 0 14px rgba(34, 194, 232, 0.12);
+    overflow: hidden;
+  }
+  /* 面板标题条 —— 这套设计的核心视觉 */
+  .panel > header {
+    position: relative; flex: 0 0 auto; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    background-image: var(--header-grad);
+    border-bottom: 1px solid var(--border-strong);
+    box-shadow: inset 0 -1px 0 rgba(34, 194, 232, 0.2);
+  }
+  .panel > header h2 {
+    margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 0.1em;
+    text-shadow: 0 1px 6px rgba(0, 10, 22, 0.7);
+  }
+  .panel > header::before, .panel > header::after {
+    content: ''; position: absolute; top: 50%; transform: translateY(-50%);
+    width: 34px; height: 12px;
+    background: var(--chevron) no-repeat center / contain;
+    filter: drop-shadow(0 0 6px rgba(34, 194, 232, 0.55));
+  }
+  .panel > header::before { left: 9px; }
+  .panel > header::after { right: 9px; transform: translateY(-50%) scaleX(-1); }
+  .panel .body { flex: 1; min-height: 0; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+
+  /* ---------- 左侧几个模拟面板 ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .kpi {
+    background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+    padding: 9px 10px;
+  }
+  .kpi span { display: block; font-size: 11px; color: var(--text-dim); }
+  .kpi b { display: block; margin-top: 5px; font-size: 20px; color: #f2fbff; font-weight: 600; }
+  .kpi b i { font-style: normal; font-size: 11px; color: var(--text-faint); margin-left: 3px; }
+
+  .list { display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+  .row {
+    display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center;
+    background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 10px; font-size: 12px;
+  }
+  .row b { font-weight: 600; }
+  .row time { color: var(--text-dim); font-size: 11px; }
+  .tag {
+    font-size: 11px; padding: 2px 7px; border-radius: 4px; color: #032230;
+    background: linear-gradient(135deg, #22c2e8, #4fe0c0); font-weight: 600;
+  }
+  .tag.warn { background: linear-gradient(135deg, #ffb454, #ffd08a); }
+  .tag.mute { background: rgba(39, 70, 101, 0.9); color: var(--text-dim); font-weight: 400; }
+
+  /* ---------- 承载对话框的面板 ---------- */
+  .chat-panel { grid-column: 2; grid-row: 1 / span 2; }
+  .chat-panel .body { padding: 0; }
+  .chat-frame { flex: 1; min-height: 0; width: 100%; border: 0; display: block; }
+
+  .hint {
+    position: absolute; left: 14px; bottom: 8px; font-size: 11px; color: var(--text-faint);
+  }
+  @media (max-width: 1100px) {
+    /* 窄屏把两栏改成上下两行：对话框独占第二行（大屏上它才是主角），
+       「待办事项」直接撤掉 —— 它的信息密度最低，留着会把对话框压得太扁。 */
+    .grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+    .chat-panel { grid-column: 1; grid-row: 2; }
+    .left-col .panel:nth-child(2) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>业 务 驾 驶 舱</h1>
+  <span class="back">示例页</span>
+</div>
+
+<div class="grid">
+  <div class="col left-col">
+    <section class="panel">
+      <header><h2>核心指标</h2></header>
+      <div class="body">
+        <div class="kpis">
+          <div class="kpi"><span>今日受理</span><b>128<i>件</i></b></div>
+          <div class="kpi"><span>按时办结率</span><b>96.4<i>%</i></b></div>
+          <div class="kpi"><span>平均办理时长</span><b>2.4<i>天</i></b></div>
+          <div class="kpi"><span>待处理</span><b>17<i>件</i></b></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="flex:1">
+      <header><h2>待办事项</h2></header>
+      <div class="body">
+        <div class="list">
+          <div class="row"><b>社保转移接续</b><time>09-22 09:12</time><span class="tag">办理中</span></div>
+          <div class="row"><b>异地就医备案</b><time>09-22 10:40</time><span class="tag warn">待补件</span></div>
+          <div class="row"><b>公积金提取</b><time>09-21 16:05</time><span class="tag mute">已完成</span></div>
+          <div class="row"><b>居住证续期</b><time>09-21 14:22</time><span class="tag mute">已完成</span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 关键：把对话框作为面板内容嵌进来。theme/bg 显式传，避免受服务端配置影响 -->
+  <section class="panel chat-panel">
+    <header><h2>桃花溪幸福河湖智能体助手</h2></header>
+    <div class="body">
+      <iframe
+        class="chat-frame"
+        title="智能体对话"
+        allow="clipboard-write"
+        src="/?embed=1&theme=cockpit&bg=cockpit&agent=service&q=%E6%88%91%E7%9A%84%E4%B8%9A%E5%8A%A1%E5%8A%9E%E5%88%B0%E5%93%AA%E4%B8%80%E6%AD%A5%E4%BA%86&user=%E5%BC%A0%E4%B8%89&channel=%E5%A4%A7%E5%B1%8F"
+      ></iframe>
+    </div>
+  </section>
+</div>
+
+<script>
+  /* 宿主侧接收子页事件（可选）。完整协议见 README 第八章。 */
+  window.addEventListener('message', (e) => {
+    const d = e.data;
+    if (!d || d.source !== 'agent-chat') return;
+    if (d.type === 'reply') console.log('[驾驶舱] 智能体回答：', d.payload.text);
+    if (d.type === 'ready') console.log('[驾驶舱] 对话框就绪', d.payload);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,947 @@
+/* ==========================================================================
+   智能体对话 · 样式
+   主题变量集中在 :root / [data-theme=light]
+   ========================================================================== */
+:root {
+  --bg: #0f1117;
+  --panel: rgba(22, 25, 34, 0.86);
+  --panel-solid: #161922;
+  --panel-2: rgba(30, 34, 46, 0.78);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --text: #e9ecf3;
+  --text-dim: #9aa3b2;
+  --text-faint: #6b7383;
+  --accent: #4f8cff;
+  --accent-2: #7c5cf5;
+  --accent-soft: rgba(79, 140, 255, 0.16);
+  --accent-border: rgba(79, 140, 255, 0.42);
+  --accent-grad: linear-gradient(135deg, #4f8cff, #7c5cf5);
+  --bubble-user: linear-gradient(135deg, #3f7cf0, #5a6df5);
+  --bubble-ai: rgba(32, 36, 48, 0.92);
+  --danger: #ef4444;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  /* 智能体条目的状态标签（如「建设中」）。深色底上直接用琥珀色就够亮，
+     浅色主题必须换成深琥珀，否则 #f59e0b 在白底上对比度只有约 2:1。 */
+  --tag-fg: #f59e0b;
+  --tag-bg: rgba(245, 158, 11, 0.16);
+  --tag-bd: rgba(245, 158, 11, 0.4);
+  /* 气泡的上下内边距。用户气泡比 AI 气泡再矮 3px —— 它多半是一两句短话，
+     竖向留白照 AI 那种富文本的量给，一行的字就会撑出一个近正方形的方块。
+     气泡总高只由「行数 × 行高 + 上下 padding + 上下 border」决定（见 .bubble），
+     任何一处多写一档，短消息就会凭空胖一圈。 */
+  --bubble-py: 11px;
+  --bubble-py-user: 8px;
+  --radius: 14px;
+  --shadow: 0 10px 32px rgba(0, 0, 0, 0.38);
+  /* 面板标题条底纹 / 发光：默认不启用，由各主题自行定义（驾驶舱靠它出效果） */
+  --header-grad: none;
+  --glow: 0 0 0 rgba(0, 0, 0, 0);
+  --chevron: none;
+  --sidebar-w: 268px;
+  --drawer-w: 380px;
+  /* 侧栏品牌区（.brand）与主区顶栏（.topbar）是并排的两条「标题条」，
+     高度必须完全一致，否则看上去像错位。两者内容高度不同
+     （品牌区 34px 的 logo vs 顶栏 32px 的徽章文字），所以不能靠各自调
+     padding 去凑 —— 用一个共享 token 钉死，改间距时不会再跑偏。 */
+  --bar-h: 58px;
+  /* 侧栏里「大模型」「智能体」「历史对话」三条小标题的高度。
+     三条必须完全等高，否则三栏 1.5:3.5:5 的起始线就对不齐 ——
+     第三行比前两行多一个「＋ 新建」按钮，靠内容撑高会硬生生多出 6px。
+     所以竖向 padding 一律归零，高度只由这个 token 决定（同 --bar-h 的做法）。 */
+  --sec-h: 38px;
+  /* 输入框（.composer textarea）的高度上限 = **两行**。
+     到顶之后不再长高，改由框内滚动接管：第 3 行起右侧出现细滚动条，
+     一行 / 两行时内容正好装得下，不会出现滚动条。
+     算法：font-size 14 × line-height 1.6 = 22.4px/行，×2 = 44.8px，
+     再加 textarea 的上下内边距 3px×2 = 6px → 50.8px；多给 1px 取整余量。
+     ⚠️ 这里和 textarea 的 **上下 padding 是绑定的**：textarea 的 padding 也在滚动窗口里，
+     竖向 padding 越大，「滚动时能露出来的行数」就越多（= 2 + padding/22.4）。
+     之前 7px 竖向 padding 的结果是滚动窗口 59.8px ≈ 2.6 行，第 3 行能露出大半个字，
+     看上去像「框里装了三行」，与「最多两行」不符。收到 3px 后露出量只有 0.3 行（一个 1.8px 的边），
+     外层的呼吸感交给 .composer 自己的 8px padding 去给。
+     autoGrow() 直接读这个 max-height 当上限，两边不会各写一份数字。 */
+  --ta-max-h: calc(2 * 1.6em + 7px);
+  --veil: 0.45;
+  --blur: 0px;
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  --bg: #f2f4f9;
+  --panel: rgba(255, 255, 255, 0.88);
+  --panel-solid: #ffffff;
+  --panel-2: rgba(244, 246, 251, 0.9);
+  --border: rgba(15, 20, 35, 0.1);
+  --border-strong: rgba(15, 20, 35, 0.18);
+  --text: #1a1f2b;
+  --text-dim: #5b6474;
+  --text-faint: #8b93a3;
+  --accent: #2563eb;
+  --accent-2: #7c3aed;
+  --accent-soft: rgba(37, 99, 235, 0.1);
+  --accent-border: rgba(37, 99, 235, 0.42);
+  --accent-grad: linear-gradient(135deg, #2563eb, #7c3aed);
+  --bubble-ai: rgba(255, 255, 255, 0.94);
+  --shadow: 0 10px 30px rgba(20, 30, 60, 0.12);
+  /* 浅底上琥珀色必须压得够深：#f59e0b 在白底上只有 2:1，#b45309 约 4.4:1 仍差一点，
+     #92400e 实测约 6.0:1 —— 标签只有 10px，属「小字」，阈值按 4.5:1 卡。 */
+  --tag-fg: #92400e;
+  --tag-bg: rgba(146, 64, 14, 0.1);
+  --tag-bd: rgba(146, 64, 14, 0.32);
+  color-scheme: light;
+}
+
+/* --------------------------------------------------------------------------
+   驾驶舱主题（政务 / 水利大屏风格）
+   取色自参考大屏：底色 #090f1f、面板 #0b2c45、内层卡片 #274665、
+   正文 #a8c1d0、强调 #0071b4~#038aa5。
+   标题条是该设计最标志性的元素：**两侧深蓝、中间青绿高光的对称发光条**
+   （实测扫描： #0a344c → #0168a7 → #04a988 ← #007bb0 ← #14304a），
+   配两端向内的 > > > / < < < 青色箭头。
+   -------------------------------------------------------------------------- */
+[data-theme='cockpit'] {
+  --bg: #050e1c;
+  --panel: rgba(9, 28, 48, 0.78);
+  --panel-solid: #0b2c45;
+  --panel-2: rgba(39, 70, 101, 0.52);
+  --border: rgba(70, 165, 235, 0.22);
+  --border-strong: rgba(90, 190, 255, 0.42);
+  --text: #eaf6ff;
+  --text-dim: #a8c1d0;
+  --text-faint: #6b8ba3;
+  --accent: #22c2e8;
+  --accent-2: #0a86c8;
+  --accent-soft: rgba(34, 194, 232, 0.14);
+  --accent-border: rgba(34, 194, 232, 0.48);
+  --accent-grad: linear-gradient(135deg, #0b6fb8, #1cc9e6);
+  --bubble-user: linear-gradient(135deg, #0a6699, #158cc0);
+  --bubble-ai: rgba(26, 60, 92, 0.74);
+  --danger: #ff6b6b;
+  --ok: #2fdc9e;
+  --warn: #ffb454;
+  --radius: 8px;
+  --shadow: 0 10px 30px rgba(0, 8, 20, 0.6);
+  --glow: 0 0 16px rgba(34, 194, 232, 0.2);
+  --header-grad:
+    radial-gradient(ellipse 34% 260% at 50% 50%, rgba(6, 176, 154, 0.5), rgba(6, 176, 154, 0) 76%),
+    radial-gradient(ellipse 62% 280% at 50% 50%, rgba(2, 136, 206, 0.44), rgba(2, 136, 206, 0) 80%),
+    linear-gradient(90deg, #06304e 0%, #0a4a75 50%, #06304e 100%);
+  --chevron: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='44' height='15' viewBox='0 0 44 15'><g fill='none' stroke='%2342d8f0' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'><path d='M2 2.2l5 5.3-5 5.3'/><path d='M17 2.2l5 5.3-5 5.3'/><path d='M32 2.2l5 5.3-5 5.3'/></g></svg>");
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+/* 关键：本文件中 .drawer / .attach-bar / .params-bar 等带有显式 display 规则，
+   会覆盖 UA 样式表的 [hidden]{display:none}，必须显式兜底 */
+[hidden] { display: none !important; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- 背景层 ---------- */
+.bg-layer {
+  position: fixed;
+  inset: -24px;
+  z-index: 0;
+  background: var(--bg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: background-image 0.4s ease, filter 0.25s ease;
+  filter: blur(var(--blur));
+  pointer-events: none;
+}
+.bg-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 620px at 8% -8%, rgba(79, 140, 255, 0.16), transparent 62%),
+    rgba(6, 8, 14, var(--veil));
+  transition: background 0.25s ease;
+}
+[data-theme='light'] .bg-veil {
+  background:
+    radial-gradient(1100px 620px at 8% -8%, rgba(37, 99, 235, 0.1), transparent 62%),
+    rgba(255, 255, 255, calc(var(--veil) * 0.9));
+}
+
+/* ---------- 布局 ---------- */
+.app {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* ---------- 侧栏 ---------- */
+.sidebar {
+  width: var(--sidebar-w);
+  flex: 0 0 var(--sidebar-w);
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  backdrop-filter: blur(18px);
+  border-right: 1px solid var(--border);
+  transition: margin-left 0.25s ease;
+}
+.sidebar.collapsed { margin-left: calc(var(--sidebar-w) * -1); }
+
+/* 竖向留白交给 --bar-h + align-items:center，不要在这里写上下 padding，
+   否则和 .topbar 的高度又会分叉（改竖向间距请改 --bar-h） */
+.brand {
+  display: flex; gap: 10px; align-items: center;
+  padding: 0 16px; min-height: var(--bar-h);
+}
+.brand-logo {
+  width: 34px; height: 34px; border-radius: 10px; flex: 0 0 34px;
+  display: grid; place-items: center; font-weight: 700; font-size: 13px; color: #fff;
+  background: var(--accent-grad);
+  box-shadow: 0 4px 14px var(--accent-soft);
+}
+.brand-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.brand-text strong { font-size: 14px; }
+.brand-text span { font-size: 11px; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 分组小标题。高度由 --sec-h 钉死（竖向 padding 归零）：三条标题行必须等高，
+   否则三栏 1.5:3.5:5 的起始线就对不齐（见 --sec-h 处的说明）。
+   也正因为高度是钉死的，里面的「＋ 新建」「6」这类控件再高几 px 也不会撑破布局。 */
+.section-title {
+  display: flex; align-items: center; justify-content: space-between;
+  height: var(--sec-h); padding: 0 16px; flex: 0 0 auto;
+  font-size: 11px; letter-spacing: 0.08em;
+  color: var(--text-faint); text-transform: uppercase;
+}
+.pill {
+  background: var(--accent-soft); color: var(--accent);
+  border-radius: 999px; padding: 1px 7px; font-size: 11px; letter-spacing: 0;
+}
+.mini-btn {
+  background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+  border-radius: 8px; padding: 3px 8px; font-size: 11px; cursor: pointer;
+  text-transform: none; letter-spacing: 0;
+}
+.mini-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* 每个分组都是**两层**：外层 .list-wrap 只负责「按比例分高度」，内层列表负责滚动与内边距。
+   三块外层写 `flex: N N 0`：flex-basis 为 0 表示内容高度不参与分配，
+   于是剩余空间严格按 grow 的比例切 —— 不管有 1 个模型还是 30 条会话，三块高度都稳定。
+   再配 `min-height: 0`，内容超出时各自在框内滚动，不会把邻块挤瘪。
+   三个注意点：
+   ① 别改成 `flex: 1 1 auto` —— 那样内容多的那块会把别块压扁，比例就不成立了。
+   ② **滚动容器的内边距必须放在内层**，不能挂在外层：flex-basis:0 时浏览器按 content box
+      分配剩余空间，外层自带的 padding 会**额外**叠在分配结果之上 ——
+      1280×820（可用高度 644px）下实测写成 105.4 : 224.6 : 314.0，
+      而 1.5:3.5:5 应是 96.6 : 225.4 : 322.0。三层偏差恒为 −8.8 / +0.8 / +8.0
+      （= 各自 share × 48 − 16，与容器高度无关），所以容器越高偏得越不明显、窄屏反而最明显。
+      外层 padding 归零、padding 交给内层列表之后，偏差降到 0.0。
+   ③ 内层列表留 12px 底部呼吸，否则滚到底时最后一条贴着侧栏底边。
+   ④ 某个分组被隐藏（见文件末尾的 [data-hide-*] 规则）后，它让出的高度会按剩下两块的
+      grow 值再分（例如隐藏大模型后是 3.5:5），这是 flex 的自然行为，不用额外处理。 */
+.list-wrap {
+  display: flex; min-height: 0;
+}
+/* 1.5 : 3.5 : 5 —— 大模型 : 智能体 : 历史对话（合计 10 份）
+   flex-grow 允许小数，不必为了取整去放大数字；
+   大模型通常只配一两个，1.5 份刚好放得下两三条，不浪费纵向空间。 */
+.wrap-models { flex: 1.5 1.5 0; }
+.wrap-agents { flex: 3.5 3.5 0; }
+.wrap-convs { flex: 5 5 0; }
+
+/* 内层列表：撑满外层（flex 单向拉伸），自身负责滚动与内边距 */
+.model-list, .agent-list, .conv-list {
+  flex: 1 1 auto; min-height: 0; min-width: 0;
+  overflow-y: auto; padding: 4px 8px 12px; display: flex; flex-direction: column; gap: 4px;
+}
+
+.pick-item {
+  display: flex; gap: 10px; align-items: center; padding: 9px 10px;
+  border-radius: 10px; cursor: pointer; border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.pick-item:hover { background: var(--panel-2); }
+.pick-item.active { background: var(--accent-soft); border-color: var(--accent-border); }
+/* ---------- 头像与智能体图标 ----------
+   四处头像（侧栏条目 / 顶栏徽章 / 消息 / 欢迎页）共用一套外观：
+   品牌色柔光底 + 同色描边 + 同色线性图标。
+   --a 由 app.js 按当前智能体的 accent 内联写在这个元素上；图标用 currentColor 描边，
+   所以只要给容器一个 color，整套配色就跟着 agent 的 accent 走，主题切换零成本。
+   想换图标/加图标只改 public/js/agent-icons.js，不要在 CSS 里画图。 */
+.agent-icon { display: block; width: 64%; height: 64%; }
+
+.pick-item .avatar,
+.agent-badge .avatar,
+.msg .ava,
+.welcome .big {
+  color: var(--a, var(--accent));
+  /* 底色 = **面板底混一点品牌色**，不是「品牌色混 transparent」。
+     用 transparent 会透出下层：侧栏有 .sidebar 的 --panel 兜着所以看不出问题，
+     但消息区是透明的，浅色主题 + 深色背景板时底色会被透成暗青绿，
+     深绿描边糊在暗底上只剩 1.21:1（实测）。锚在 --panel-2 上就与下层解耦了。 */
+  background: color-mix(in srgb, var(--a, var(--accent)) 14%, var(--panel-2));
+  border: 1px solid color-mix(in srgb, var(--a, var(--accent)) 30%, transparent);
+}
+/* 浅色主题必须把 accent 压深一档：这批 accent 是给深色底挑的，直接放白底上对比度只有 2:1 出头
+   （#f59e0b 橙 2.1、#22c55e 绿 2.2），描边会糊掉。混 42% 的深藏青既保住色相又拉到 3.6:1 以上。
+   别调到 6 成以上：实测混 36% 时最差的绿色只有 3.23:1，贴着非文本阈值的边。 */
+[data-theme='light'] .pick-item .avatar,
+[data-theme='light'] .agent-badge .avatar,
+[data-theme='light'] .msg .ava,
+[data-theme='light'] .welcome .big {
+  color: color-mix(in srgb, var(--a, var(--accent)) 58%, #0f172a);
+  background: color-mix(in srgb, var(--a, var(--accent)) 12%, var(--panel-2));
+  border-color: color-mix(in srgb, var(--a, var(--accent)) 30%, transparent);
+}
+/* 用户自己的头像走中性色：它不是智能体，用品牌色会和 AI 抢注意力 */
+.msg.user .ava { color: var(--text-dim); background: var(--panel-2); border-color: var(--border); }
+
+.pick-item .avatar {
+  width: 30px; height: 30px; flex: 0 0 30px; border-radius: 9px;
+  display: grid; place-items: center;
+}
+.pick-item .txt { min-width: 0; display: flex; flex-direction: column; }
+/* 名称行 = 名字 + 可选状态标签。名字吃掉剩余宽度、超长才省略；
+   标签不参与收缩（flex: 0 0 auto），必须完整可见 —— 状态要是也被省略号截掉就白标了。
+   标签行高 16px 略小于名字的 18px，所以加标签不会把这条撑高、破坏列表的节奏。 */
+.pick-item .txt .nm-row { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.pick-item .txt .nm-row strong { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.pick-item .txt .tag {
+  flex: 0 0 auto; font-size: 10px; font-style: normal; font-weight: 500;
+  /* 行高 14 + 上下边框 2 = 16px，必须小于名字行高（13px 字 × normal ≈ 17px），
+     否则带标签的那一条会比别的条目高 1px，整列节奏就断了。 */
+  line-height: 14px; padding: 0 5px; border-radius: 4px; white-space: nowrap;
+  color: var(--tag-fg); background: var(--tag-bg); border: 1px solid var(--tag-bd);
+}
+.pick-item .txt > span { font-size: 11px; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.conv-item {
+  position: relative; padding: 8px 30px 8px 10px; border-radius: 10px; cursor: pointer;
+  border: 1px solid transparent;
+}
+.conv-item:hover { background: var(--panel-2); }
+.conv-item.active { background: var(--accent-soft); border-color: var(--accent-border); }
+.conv-item .t { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-item .s { font-size: 11px; color: var(--text-faint); margin-top: 2px; display: flex; gap: 6px; }
+/* 智能体名会随业务改名变长（现在最长 9 个中文），窄侧栏里必须让「名称」这一截自己省略：
+   两个 span 默认既可换行又可伸缩，一超宽整行就折行，把「· N 条 · 时间」挤到第二行去。
+   所以名称可收缩 + 省略号，计数/时间那截保持自然宽度不收缩。 */
+.conv-item .s span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-item .s span:first-child { flex: 0 1 auto; min-width: 0; }
+.conv-item .s span:last-child { flex: 0 0 auto; }
+.conv-item .del {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  opacity: 0.42; border: 0; background: transparent; color: var(--text-faint);
+  cursor: pointer; font-size: 13px; padding: 2px 5px; border-radius: 6px;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+.conv-item:hover .del, .conv-item.active .del { opacity: 1; }
+.conv-item .del:focus-visible { opacity: 1; outline: 2px solid var(--accent); outline-offset: 1px; }
+.conv-item .del:hover { color: var(--danger); background: rgba(239, 68, 68, 0.12); }
+/* 触屏设备没有 hover，删除按钮必须常显，否则根本找不到入口 */
+@media (hover: none) {
+  .conv-item .del { opacity: 0.85; }
+}
+
+/* 侧栏底部原来那排「背景 / 链接参数 / 设置」按钮已删除：
+   三者本来就是抽屉顶部的三个切页，抽屉一打开就都能点到，底部再放一排纯属重复。
+   入口统一收进品牌区右侧的 ⚙（见 .brand-settings）。 */
+
+/* ---------- 侧栏分组的显隐 ----------
+   由 app.js 把 data-hide-models / data-hide-agents 挂在 .sidebar 上（默认显示 = 不挂）。
+   为什么不直接给元素加 hidden：每组的小标题与列表是**两个兄弟节点**，
+   逐个加属性要改两处、还容易只改一半；挂在共同父级上，一条属性就能让整组同时消失。
+   隐藏后剩余分组会自动按各自的 grow 重新分配高度（见上面 1.5:3.5:5 那段说明）。
+   注意：链接里显式带了 ?model= / ?agent= 时，app.js 不会挂对应的 data-hide-*，
+   即「配置里关掉、但链接点名要它」时依然显示 —— 这是需求里明确要的行为。 */
+.sidebar[data-hide-models] [data-region='models'],
+.sidebar[data-hide-agents] [data-region='agents'] {
+  display: none;
+}
+
+/* ---------- 主区 ---------- */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 16px; min-height: var(--bar-h);
+  border-bottom: 1px solid var(--border);
+  background: var(--panel); backdrop-filter: blur(18px);
+}
+.agent-badge { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.agent-badge .avatar {
+  width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+}
+.agent-badge .meta { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.agent-badge .meta strong { font-size: 14px; }
+.agent-badge .meta span {
+  font-size: 11px; color: var(--text-faint); font-family: ui-monospace, Consolas, monospace;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px; cursor: pointer;
+}
+.top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+.ghost-btn {
+  background: transparent; border: 1px solid var(--border-strong); color: var(--text-dim);
+  border-radius: 9px; padding: 6px 11px; font-size: 12px; cursor: pointer;
+  transition: all 0.15s;
+}
+.ghost-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ghost-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.ghost-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+.conn { font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-faint); }
+.conn[data-state='running'] { color: var(--accent); border-color: var(--accent-border); background: var(--accent-soft); }
+.conn[data-state='error'] { color: var(--danger); border-color: rgba(239, 68, 68, 0.4); }
+.conn[data-state='ok'] { color: var(--ok); border-color: rgba(34, 197, 94, 0.35); }
+
+.icon-btn {
+  background: transparent; border: 1px solid transparent; color: var(--text-dim);
+  border-radius: 9px; width: 32px; height: 32px; cursor: pointer; font-size: 14px;
+  display: grid; place-items: center; flex: 0 0 auto;
+}
+.icon-btn:hover { background: var(--panel-2); color: var(--text); }
+
+/* 这里原有 `.only-mobile { display: none }` + 窄屏 / 嵌入两处 `display: grid` 的显隐配对，
+   专给顶栏的 ☰ 用。已删除，原因值得记一笔：
+   侧栏底部的按钮和品牌区的「收起侧栏」都被删掉后，☰ 成了唯一的侧栏开关，
+   可它照旧只在 ≤860px 和嵌入模式显示 —— 于是宽屏下侧栏既收不起来也展不开。
+   现在 ☰ 常显，`.only-mobile` 这个类已无使用者，别再把它加回任何按钮上。
+   （遗留的一处：窄容器 / 嵌入的浮层场景里侧栏会盖住 ☰，那时收起靠在主区点一下或按 Esc，
+   见 app.js 的 bindOverlaySidebarDismiss()。品牌区不再放同功能的箭头，理由见下一条注释。） */
+
+/* ---------- 品牌区右侧的入口 ----------
+   品牌区**只放 ⚙ 这一枚**（打开抽屉）。
+   它不能跟着侧栏的显隐规则走 —— 侧栏底部那排按钮删掉后，这是打开抽屉的唯一入口，
+   任何宽度都必须常显，一旦隐藏就再也进不去设置、背景和链接参数。
+   侧栏的收起 / 展开**只在主区顶栏的 ☰**，品牌区不再放同功能的箭头：
+   曾试过在这里加一枚 ⇤，与 ⚙ 并排两个图标挤在一起，视觉上就是重复的，已撤掉。 */
+.brand-text { flex: 1 1 auto; }
+.brand-settings { margin-left: auto; font-size: 15px; }
+html[data-embed] .brand { padding: 0 12px; gap: 8px; }
+@media (max-width: 860px) {
+  .brand { padding: 0 12px; gap: 8px; }
+}
+
+/* ---------- 消息区 ---------- */
+.messages {
+  flex: 1; overflow-y: auto; padding: 22px 20px 8px;
+  scroll-behavior: smooth;
+}
+.messages.dragging { outline: 2px dashed var(--accent); outline-offset: -10px; border-radius: var(--radius); }
+
+.msg { display: flex; gap: 10px; margin: 0 auto 20px; max-width: 880px; animation: rise 0.24s ease; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.msg.user { flex-direction: row-reverse; }
+
+.msg .ava {
+  width: 32px; height: 32px; flex: 0 0 32px; border-radius: 10px;
+  display: grid; place-items: center; font-size: 16px;
+}
+.msg .body { min-width: 0; max-width: min(78%, 720px); display: flex; flex-direction: column; gap: 6px; }
+.msg.user .body { align-items: flex-end; }
+
+.bubble {
+  padding: var(--bubble-py) 14px; border-radius: var(--radius); line-height: 1.68;
+  word-break: break-word; overflow-wrap: anywhere;
+  border: 1px solid var(--border); background: var(--bubble-ai);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+/* 首尾块级元素的外边距折掉：它们的外侧紧贴气泡的 padding，
+   再叠一层 7px 就是纯多余的高度（一行短句凭空多 14px，近正方形就是这么来的）。 */
+.bubble > :first-child { margin-top: 0; }
+.bubble > :last-child,
+.bubble > p:last-of-type { margin-bottom: 0; }
+.msg.user .bubble {
+  background: var(--bubble-user); color: #fff; border-color: transparent;
+  padding-top: var(--bubble-py-user); padding-bottom: var(--bubble-py-user);
+}
+.bubble.err { border-color: rgba(239, 68, 68, 0.5); color: #ffb4b4; }
+.bubble .cursor {
+  display: inline-block; width: 7px; height: 15px; margin-left: 2px;
+  background: var(--accent); vertical-align: -2px; animation: blink 1s steps(2) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.msg-tools { display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s; flex-wrap: wrap; }
+.msg:hover .msg-tools { opacity: 1; }
+.tool-btn {
+  background: transparent; border: 1px solid var(--border); color: var(--text-faint);
+  border-radius: 7px; padding: 2px 8px; font-size: 11px; cursor: pointer;
+}
+.tool-btn:hover { border-color: var(--accent); color: var(--accent); }
+.tool-btn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+details.think {
+  border: 1px dashed var(--border-strong); border-radius: 10px;
+  background: var(--panel-2); padding: 6px 10px; font-size: 12px; color: var(--text-dim);
+}
+details.think summary { cursor: pointer; color: var(--text-faint); font-size: 12px; }
+details.think pre { margin: 6px 0 2px; white-space: pre-wrap; font-family: inherit; font-size: 12px; line-height: 1.6; }
+
+/* markdown */
+.bubble h1, .bubble h2, .bubble h3 { margin: 10px 0 6px; font-size: 15px; }
+.bubble h3 { font-size: 14px; }
+.bubble p { margin: 7px 0; }
+.bubble ul, .bubble ol { margin: 7px 0; padding-left: 20px; }
+.bubble li { margin: 3px 0; }
+.bubble code {
+  background: rgba(127, 127, 127, 0.18); padding: 1px 5px; border-radius: 5px;
+  font-family: ui-monospace, Consolas, monospace; font-size: 12.5px;
+}
+.bubble pre {
+  background: rgba(0, 0, 0, 0.32); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 12px; overflow-x: auto; margin: 8px 0;
+}
+.bubble pre code { background: none; padding: 0; }
+.bubble blockquote {
+  margin: 8px 0; padding: 4px 12px; border-left: 3px solid var(--accent);
+  color: var(--text-dim); background: var(--accent-soft); border-radius: 0 8px 8px 0;
+}
+.bubble table { border-collapse: collapse; margin: 8px 0; font-size: 13px; width: 100%; }
+.bubble th, .bubble td { border: 1px solid var(--border-strong); padding: 5px 9px; text-align: left; }
+.bubble th { background: var(--panel-2); }
+/* 首列常是短 key，不折行，避免被长 value 挤成一字一行 */
+.bubble table th:first-child,
+.bubble table td:first-child { white-space: nowrap; }
+.bubble table td { word-break: break-word; }
+.bubble a { color: var(--accent); }
+.msg.user .bubble a { color: #dbeafe; }
+.bubble hr { border: 0; border-top: 1px solid var(--border-strong); margin: 12px 0; }
+
+/* 附件 / 图片 */
+.attach-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; padding: 3px 9px;
+  color: var(--text-dim); max-width: 260px;
+}
+.chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip button { border: 0; background: transparent; color: var(--text-faint); cursor: pointer; padding: 0; }
+.chip button:hover { color: var(--danger); }
+.bubble img { max-width: 100%; border-radius: 10px; margin-top: 6px; }
+
+/* 欢迎卡 */
+.welcome { max-width: 880px; margin: 6px auto 22px; text-align: center; }
+.welcome .big {
+  width: 58px; height: 58px; margin: 0 auto 12px; border-radius: 18px;
+  display: grid; place-items: center;
+}
+.welcome h2 { margin: 0 0 8px; font-size: 19px; font-weight: 600; }
+.welcome p { margin: 0 0 18px; color: var(--text-dim); white-space: pre-wrap; line-height: 1.7; }
+.sugs { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.sug {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--text-dim);
+  border-radius: 999px; padding: 7px 14px; font-size: 12.5px; cursor: pointer;
+}
+.sug:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- 输入区 ---------- */
+.composer-wrap { padding: 8px 20px 14px; }
+.composer {
+  max-width: 880px; margin: 0 auto; display: flex; gap: 8px; align-items: flex-end;
+  background: var(--panel); backdrop-filter: blur(18px);
+  border: 1px solid var(--border-strong); border-radius: 16px;
+  padding: 8px 10px; box-shadow: var(--shadow);
+}
+.composer:focus-within { border-color: var(--accent); }
+.composer textarea {
+  flex: 1; resize: none; border: 0; outline: 0; background: transparent; color: var(--text);
+  font-family: inherit; font-size: 14px; line-height: 1.6; padding: 3px 4px;
+  /* 上限 = 两行，见 :root 的 --ta-max-h。textarea 默认 overflow-y:auto，
+     所以「装得下就不出滚动条、装不下才出」是免费的，不用 JS 去 toggle。
+     竖向 padding 只有 3px：它会计入滚动窗口，给多了滚动时就会多露出一行。 */
+  max-height: var(--ta-max-h); min-height: 22px;
+}
+.composer textarea::placeholder { color: var(--text-faint); }
+
+/* 输入框右侧的细滚动条：只在内容超过两行、框内真溢出时才出现。
+   一行 / 两行时装得下，overflow:auto 天然不渲染，所以不会出现「一行就有竖线」的情况。
+   比全局那条 8px 细一档，避免在输入框里显得笨重；不要给它写 scrollbar-width，
+   否则 Chromium 会改用原生滚动条、把这套 ::-webkit-scrollbar 样式整个忽略掉。 */
+.composer textarea::-webkit-scrollbar { width: 6px; }
+.composer textarea::-webkit-scrollbar-track { background: transparent; }
+.composer textarea::-webkit-scrollbar-thumb { background: rgba(127, 127, 127, 0.36); border-radius: 6px; }
+.composer textarea::-webkit-scrollbar-thumb:hover { background: rgba(127, 127, 127, 0.55); }
+
+/* 附件按钮：按需求**常隐**，不再随输入框焦点淡入。
+   用 display:none 而不是 width:0 —— 前者彻底不参与布局、也不可被 Tab 聚焦：
+   输入框左侧不会留出任何空位，失焦 / 切窗口 / 截图时也不会突然冒出来。
+   按钮节点与「点击后打开附件弹层」的逻辑都保留着（程序化 .click() 仍能触发），
+   要恢复常显，删掉这一行即可。 */
+#btnAttach { display: none; }
+
+.send-btn {
+  width: 34px; height: 34px; flex: 0 0 34px; border-radius: 11px; border: 0; cursor: pointer;
+  background: var(--accent-grad); color: #fff; font-size: 14px;
+  display: grid; place-items: center;
+}
+.send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.composer-tip {
+  max-width: 880px; margin: 6px auto 0; display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--text-faint);
+}
+.attach-bar, .params-bar { max-width: 880px; margin: 0 auto 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ---------- 抽屉 ---------- */
+.drawer-mask { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 40; }
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: var(--drawer-w); z-index: 41;
+  background: var(--panel-solid); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; box-shadow: var(--shadow);
+  animation: slideIn 0.22s ease;
+}
+@keyframes slideIn { from { transform: translateX(18px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+.drawer-head {
+  display: flex; align-items: center; gap: 8px; padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.tabs { display: flex; gap: 4px; flex: 1; }
+.tab {
+  background: transparent; border: 0; color: var(--text-faint); cursor: pointer;
+  padding: 6px 12px; border-radius: 9px; font-size: 13px;
+}
+.tab.active { background: var(--accent-soft); color: var(--accent); }
+.drawer-body { padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 22px; }
+
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field > label { font-size: 12px; color: var(--text-dim); font-weight: 600; }
+.field > label b { color: var(--accent); font-weight: 600; }
+.hint { margin: 0; font-size: 11.5px; color: var(--text-faint); line-height: 1.6; }
+.hint code { background: rgba(127, 127, 127, 0.18); padding: 1px 4px; border-radius: 4px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-dim); cursor: pointer; }
+.check input { accent-color: var(--accent); }
+.seg { display: flex; gap: 4px; background: var(--panel-2); padding: 3px; border-radius: 10px; }
+.seg button {
+  flex: 1; border: 0; background: transparent; color: var(--text-dim); cursor: pointer;
+  padding: 6px 0; border-radius: 8px; font-size: 12.5px;
+}
+.seg button.active { background: var(--accent); color: #fff; }
+input[type='range'] { width: 100%; accent-color: var(--accent); }
+input[type='text'], input[type='file'] {
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 9px;
+  color: var(--text); padding: 7px 10px; font-size: 13px; outline: 0; font-family: inherit;
+  /* min-width: 0 是必须的，不是保险：<input> 带默认 size=20，它的固有宽度约 174px，
+     而 grid/flex 子项的 min-width:auto 会取这个固有宽度当最小尺寸 —— 于是再写 1fr
+     也缩不下去，整行被撑破。见下面 .kv-add 的说明。 */
+  min-width: 0;
+}
+input[type='text']:focus { border-color: var(--accent); }
+
+.bg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.bg-cell {
+  aspect-ratio: 4 / 3; border-radius: 10px; cursor: pointer; border: 2px solid transparent;
+  background-size: cover; background-position: center; position: relative; overflow: hidden;
+}
+.bg-cell.active { border-color: var(--accent); }
+.bg-cell span {
+  position: absolute; left: 0; right: 0; bottom: 0; font-size: 10.5px; text-align: center;
+  padding: 3px 0; background: rgba(0, 0, 0, 0.45); color: #fff;
+}
+.param-list { display: flex; flex-direction: column; gap: 6px; }
+/* 一行参数 = 参数名(code) + 参数值(span)。两个都要能被压扁并出省略号：
+   参数名里没有可断行的位置（`_` 不是断行点），不设 min-width:0 就会被自己的固有宽度顶住，
+   整行冲出抽屉 —— 实测传一个 44 字符的参数名，390 视口下溢出 257px、嵌入 340 抽屉溢出 307px。
+   取 max-width: 50% 让参数名最多占一半，剩下的留给参数值（值通常比名长得多）。 */
+.param-row {
+  display: flex; gap: 8px; align-items: center; font-size: 12.5px;
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 9px; padding: 6px 10px;
+  min-width: 0;
+}
+.param-row code {
+  color: var(--accent); font-family: ui-monospace, Consolas, monospace;
+  flex: 0 1 auto; min-width: 0; max-width: 50%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.param-row span {
+  color: var(--text-dim); flex: 1 1 auto; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* 「手动补充参数」那一行：key / value 两个输入 + 「添加」按钮。
+   写成 minmax(0, 1fr) 而不是 1fr —— 这是这一行不被撑破的关键：
+   ① `1fr` 实际是 `minmax(auto, 1fr)`，`auto` 当最小尺寸用，而 grid 子项（input）
+      的 min-width 又是 auto → 取 input 的固有宽度（默认 size=20 ≈ 174px）。
+      两个输入就锁死 348px，加按钮与间距一起约 420px，比抽屉内容宽度还大。
+   ② 抽屉窄到 420px 以下（手机 390px 视口、或嵌入模式固定 340px）时整行向右溢出，
+      「添加」被挤出可视区；且 `auto` 轨道被压到极窄，按钮里的「添加」会断成上下两行。
+      —— `overflow-y: auto` 会让 `overflow-x` 计算成 auto，于是抽屉底部还多出一条横向滚动条。
+   ③ 配合上面的 `input { min-width: 0 }` 与按钮 `white-space: nowrap`，两个输入才可以
+      真正按比例收缩、按钮保持单行。实测（修复前 → 修复后）：
+      嵌入 340px 抽屉：按钮溢出 89px → 0；手机 390px：溢出 39px → 0。 */
+.kv-add { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; }
+.kv-add .ghost-btn { white-space: nowrap; }
+.link-box {
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 9px;
+  padding: 8px 10px; overflow-x: auto;
+}
+.link-box code { font-size: 11.5px; color: var(--text-dim); white-space: pre-wrap; word-break: break-all; }
+.preview {
+  margin: 0; background: var(--panel-2); border: 1px solid var(--border); border-radius: 9px;
+  padding: 10px; font-size: 12px; white-space: pre-wrap; word-break: break-word;
+  color: var(--text-dim); font-family: inherit; max-height: 220px; overflow-y: auto;
+}
+.kv { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--text-dim); }
+.kv b { color: var(--text); font-weight: 600; }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 230px; }
+
+/* ---------- 弹层（确认 / 表单） ----------
+   替换 window.confirm / prompt：那两者在 iframe sandbox（无 allow-modals）
+   或被浏览器「阻止更多对话框」时会被静默忽略，导致删除等操作点了没反应。 */
+.modal-mask {
+  position: fixed; inset: 0; z-index: 120;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: rgba(0, 0, 0, 0.52);
+  animation: fadeIn 0.14s ease;
+}
+.modal {
+  width: min(400px, 100%);
+  background: var(--panel-solid); color: var(--text);
+  border: 1px solid var(--border-strong); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 18px;
+  animation: popIn 0.16s ease;
+}
+.modal h3 { margin: 0 0 8px; font-size: 15px; }
+.modal-desc { margin: 0 0 14px; font-size: 13px; line-height: 1.65; color: var(--text-dim); white-space: pre-wrap; }
+.modal-field { display: block; margin-bottom: 10px; }
+.modal-field > span { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+.modal-field input, .modal-field textarea {
+  width: 100%; padding: 8px 10px; border-radius: 9px;
+  border: 1px solid var(--border-strong); background: var(--panel-2);
+  color: var(--text); font-size: 13px; font-family: inherit; outline: none; resize: vertical;
+}
+.modal-field input:focus, .modal-field textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.m-btn {
+  padding: 7px 16px; border-radius: 9px; font-size: 13px; cursor: pointer;
+  border: 1px solid var(--border-strong); background: transparent; color: var(--text);
+  transition: background 0.15s, filter 0.15s;
+}
+.m-btn:hover { background: var(--panel-2); }
+.m-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.m-btn.primary:hover { filter: brightness(1.12); }
+.m-btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.m-btn.danger:hover { filter: brightness(1.12); }
+.modal.shake { animation: shakeX 0.3s; }
+@keyframes fadeIn { from { opacity: 0; } }
+@keyframes popIn { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+@keyframes shakeX { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%);
+  background: var(--panel-solid); border: 1px solid var(--border-strong); color: var(--text);
+  padding: 9px 18px; border-radius: 11px; font-size: 13px; z-index: 90; box-shadow: var(--shadow);
+  animation: rise 0.2s ease;
+}
+.toast.err { border-color: rgba(239, 68, 68, 0.5); color: #ffb4b4; }
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(127, 127, 127, 0.32); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(127, 127, 127, 0.5); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ==========================================================================
+   驾驶舱主题的形体语言
+   —— 面板发光标题条 + 两端向内箭头 + 青色描边高光 + 更硬的圆角
+   全部限定在 [data-theme='cockpit'] 下，深色 / 浅色主题完全不受影响
+   ========================================================================== */
+[data-theme='cockpit'] .bg-veil {
+  background:
+    radial-gradient(1100px 620px at 50% -12%, rgba(4, 140, 190, 0.22), transparent 62%),
+    radial-gradient(900px 700px at 6% 106%, rgba(4, 118, 168, 0.18), transparent 60%),
+    rgba(4, 12, 24, var(--veil));
+}
+
+/* 顶部标题条：对称发光底纹（大屏每个面板标题条的做法） */
+[data-theme='cockpit'] .topbar {
+  background-image: var(--header-grad);
+  border-bottom-color: var(--border-strong);
+  box-shadow: inset 0 -1px 0 rgba(34, 194, 232, 0.2), var(--glow);
+}
+/* 两端向内的青色箭头 —— 参考大屏 >> 标题 << 的角标装饰 */
+[data-theme='cockpit'] .topbar::before,
+[data-theme='cockpit'] .topbar::after {
+  content: ''; flex: 0 0 44px; width: 44px; height: 15px; opacity: 0.85;
+  background: var(--chevron) no-repeat center / contain;
+  filter: drop-shadow(0 0 6px rgba(34, 194, 232, 0.55));
+}
+[data-theme='cockpit'] .topbar::after { transform: scaleX(-1); }
+
+/* 侧栏品牌区也做成标题条 */
+[data-theme='cockpit'] .brand {
+  background-image: var(--header-grad);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+/* 侧栏分组标题：青色左标记 + 淡青底（对应大屏的「事件报警列表」小标题） */
+[data-theme='cockpit'] .section-title {
+  color: #9fd9f2;
+  border-left: 2px solid var(--accent);
+  border-radius: 2px;
+  /* 竖向 padding 必须是 0：高度统一交给 --sec-h，否则这里会把两条标题行拉成不等高。
+     横向保留原来的 12px / 9px（左边 9px 给青色竖条留位置）。 */
+  padding: 0 12px 0 9px;
+  background: linear-gradient(90deg, rgba(34, 194, 232, 0.12), rgba(34, 194, 232, 0) 70%);
+}
+
+/* 面板统一：上/侧沿高光 + 外发光 */
+[data-theme='cockpit'] .sidebar { box-shadow: inset -1px 0 0 rgba(34, 194, 232, 0.16); }
+[data-theme='cockpit'] .composer {
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(120, 220, 255, 0.1);
+}
+[data-theme='cockpit'] .composer:focus-within {
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(120, 220, 255, 0.12), var(--glow);
+}
+
+/* 内层卡片 / 气泡：贴近大屏 #274665 的卡片质感 */
+[data-theme='cockpit'] .bubble { border-color: rgba(90, 190, 255, 0.22); }
+[data-theme='cockpit'] .msg.user .bubble { border-color: rgba(34, 194, 232, 0.38); }
+/* 只加内发光，不覆盖边框色 —— 边框要跟智能体的 accent 走（见「头像与智能体图标」段），
+   驾驶舱也照旧，否则六种品牌色在这里全被压成同一条灰边。 */
+[data-theme='cockpit'] .pick-item .avatar,
+[data-theme='cockpit'] .msg .ava,
+[data-theme='cockpit'] .agent-badge .avatar {
+  box-shadow: inset 0 0 12px rgba(34, 194, 232, 0.12);
+}
+/* 头像底在驾驶舱要单独锚一次：这里的 --panel-2 只有 0.52 不透明度，混出来的底偏亮，
+   这批 accent 里最暗的紫色（#a855f7，lum 0.22）压在上面只剩 **2.70:1**（实测）。
+   驾驶舱本身就是深色科技风，头像底直接锚在固定的深蓝上更稳、也更贴题。
+   ⚠️ 选择器必须写 `.msg.assistant` —— 写成 `.msg .ava` 会把用户头像的中性底一起覆盖掉。 */
+[data-theme='cockpit'] .pick-item .avatar,
+[data-theme='cockpit'] .agent-badge .avatar,
+[data-theme='cockpit'] .msg.assistant .ava,
+[data-theme='cockpit'] .welcome .big {
+  background: color-mix(in srgb, var(--a, var(--accent)) 16%, #0b1a28);
+}
+[data-theme='cockpit'] .send-btn { box-shadow: 0 0 14px rgba(34, 194, 232, 0.42); }
+/* 亮青底上的白字对比度只有 ~1.9:1，改用深色字保证可读 */
+[data-theme='cockpit'] .send-btn { color: #032230; }
+[data-theme='cockpit'] .seg button.active { color: #032230; font-weight: 600; }
+
+/* 标题条上还有一层青绿高光，白字没问题，但 --text-faint 压在亮区只有 ~2:1，
+   所以副标题提亮；工具按钮统一给深色底，保证压在发光区上也读得清。 */
+[data-theme='cockpit'] .brand-text span { color: rgba(198, 233, 246, 0.85); }
+[data-theme='cockpit'] .topbar .ghost-btn,
+[data-theme='cockpit'] .topbar .conn,
+[data-theme='cockpit'] .topbar .icon-btn {
+  background: rgba(3, 20, 34, 0.42);
+  color: #d8ecf8;
+  border-color: rgba(120, 200, 240, 0.34);
+}
+[data-theme='cockpit'] .topbar .ghost-btn:hover,
+[data-theme='cockpit'] .topbar .icon-btn:hover {
+  background: rgba(3, 20, 34, 0.62);
+  color: #fff;
+}
+[data-theme='cockpit'] .conn[data-state='running'] { color: #9fe9ff; }
+[data-theme='cockpit'] .conn[data-state='ok'] { color: #7ff0c2; }
+
+/* 更硬的圆角，贴近大屏的方正面板 */
+[data-theme='cockpit'] .composer { border-radius: 10px; }
+[data-theme='cockpit'] .pick-item,
+[data-theme='cockpit'] .conv-item,
+[data-theme='cockpit'] .agent-badge .avatar,
+[data-theme='cockpit'] .msg .ava,
+[data-theme='cockpit'] .brand-logo { border-radius: 6px; }
+[data-theme='cockpit'] .sug,
+[data-theme='cockpit'] .chip,
+[data-theme='cockpit'] .tool-btn { border-radius: 4px; }
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 860px) {
+  :root { --drawer-w: 100vw; }
+  .sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 45; }
+  .sidebar:not(.collapsed) { box-shadow: var(--shadow); }
+  .msg .body { max-width: 88%; }
+  .messages { padding: 16px 12px 4px; }
+  .composer-wrap { padding: 8px 12px 12px; }
+  .agent-badge .meta span { max-width: 150px; }
+  /* 驾驶舱标题条的装饰箭头在窄容器里会把标题挤掉，直接收起来 */
+  [data-theme='cockpit'] .topbar::before,
+  [data-theme='cockpit'] .topbar::after { display: none; }
+}
+
+/* ==========================================================================
+   iframe 嵌入模式
+   html[data-embed='compact'] —— 填满容器；侧栏默认展开，容器够宽时正常占位，
+                                只有窄容器（<620px）才退化为浮层
+   html[data-embed='auto']    —— 高度自适应，退化为纯聊天组件
+   ========================================================================== */
+html[data-embed] {
+  /* 252 不是随手写的：侧栏里「名称 + 一行描述」的可视宽度是
+     侧栏宽 - 79px（1 边框 + 16 列表内边距 + 20 条目内边距 + 2 条目边框 + 30 头像 + 10 gap）。
+     中文描述最长目前是「调用长寿区机关大脑进行普通咨询」15 字 ≈ 165px，
+     236px 时只剩 157px → 会被 ellipsis 截掉，248px 也仅余 4px。
+     取 252px 留 8px 余量，避免不同 DPI 下再踩到边界。
+     要收窄侧栏，先看侧栏最长的那条描述放不放得下（侧栏文案探针会逐个量，脚本已归档）。 */
+  --sidebar-w: 252px;
+  --drawer-w: 340px;
+  /* 嵌入容器里两条标题条一起压扁，仍然保持等高 */
+  --bar-h: 50px;
+  /* 小标题同样压一档 */
+  --sec-h: 32px;
+}
+/* 嵌入容器无法保证有桌面级的宽度，先按浮层做最保守的默认（见文件末尾的
+   620px 覆盖）。窄容器里占位会把消息区挤到没法看，浮层反而更实用。 */
+html[data-embed] .sidebar {
+  position: fixed; top: 0; bottom: 0; left: 0; z-index: 45;
+}
+html[data-embed] .sidebar:not(.collapsed) { box-shadow: var(--shadow); }
+html[data-embed] .drawer { width: min(var(--drawer-w), 100%); }
+
+/* 紧凑间距 */
+html[data-embed] .topbar { padding: 0 12px; gap: 8px; }
+html[data-embed] .agent-badge { gap: 8px; }
+html[data-embed] .agent-badge .avatar { width: 28px; height: 28px; font-size: 15px; border-radius: 8px; }
+html[data-embed] .agent-badge .meta strong { font-size: 13px; }
+html[data-embed] .agent-badge .meta span { max-width: 150px; }
+html[data-embed] .messages { padding: 14px 12px 4px; }
+html[data-embed] .msg { gap: 8px; margin-bottom: 14px; max-width: none; }
+html[data-embed] .msg .ava { width: 26px; height: 26px; flex: 0 0 26px; font-size: 14px; border-radius: 8px; }
+html[data-embed] .msg .body { max-width: 86%; }
+html[data-embed] .composer-wrap { padding: 6px 12px 10px; }
+/* 输入框的两行上限在嵌入模式里也一样，不再单独压矮 —— 高度只认 --ta-max-h */
+html[data-embed] .composer-tip { display: none; }
+html[data-embed] .welcome { margin: 4px auto 18px; }
+html[data-embed] .welcome .big { font-size: 30px; margin-bottom: 4px; }
+
+/* 高度自适应：容器跟着内容长，宿主不用写死 iframe 高度。
+   注意 .messages 必须从 flex:1 改为常规流，否则 flex-basis:0 会让它塌成 0 高。 */
+html[data-embed='auto'],
+html[data-embed='auto'] body { height: auto; overflow: visible; }
+html[data-embed='auto'] .app { display: block; height: auto; min-height: 0; background: var(--bg); }
+html[data-embed='auto'] .main { display: block; }
+html[data-embed='auto'] .messages { flex: none; overflow: visible; }
+/* auto 模式下没有「视口」，侧栏/抽屉这种 100vh 结构不成立：改为纯聊天组件 */
+html[data-embed='auto'] .sidebar,
+html[data-embed='auto'] .drawer,
+html[data-embed='auto'] .drawer-mask,
+html[data-embed='auto'] .bg-layer,
+html[data-embed='auto'] .bg-veil { display: none !important; }
+html[data-embed='auto'] .app { background: var(--bg); }
+
+/* 上面把 compact 模式的侧栏固定成了浮层，但侧栏默认是展开的 —— 于是它会压在
+   消息区上面，把左半截对话内容整个盖掉（760px 宽的驾驶舱面板里实测如此）。
+   容器够宽就改回正常占位：挤压消息区，而不是盖住它；只有窄容器才继续用浮层，
+   否则消息区会被挤到没法看。侧栏自身的宽度与滑动动画都不变。 */
+@media (min-width: 620px) {
+  html[data-embed='compact'] .sidebar { position: static; }
+  html[data-embed='compact'] .sidebar:not(.collapsed) { box-shadow: none; }
+}
+

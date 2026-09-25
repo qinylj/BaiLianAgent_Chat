@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>sandbox 嵌入示例</title>
+<style>
+  body {
+    margin: 0; padding: 22px; font-family: system-ui, "Microsoft YaHei", sans-serif;
+    background: #0f1117; color: #e9ecf3;
+  }
+  h1 { font-size: 17px; margin: 0 0 8px; }
+  p { font-size: 13px; color: #9aa3b2; line-height: 1.75; margin: 0 0 6px; }
+  code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  ul { font-size: 13px; color: #9aa3b2; line-height: 1.9; padding-left: 20px; }
+  .box { margin-top: 14px; }
+  iframe { width: 100%; height: 620px; border: 1px solid #2a2f3d; border-radius: 12px; display: block; }
+</style>
+</head>
+<body>
+<h1>用 sandbox 属性嵌入</h1>
+<p>这个页面演示「宿主给对话子页加 sandbox 限制」的标准接法，可直接对照改到你的系统里。</p>
+<ul>
+  <li><code>allow-scripts</code> <b>必需</b> —— 不给的话子页脚本完全不执行，界面是死的。</li>
+  <li><code>allow-same-origin</code> <b>必需</b> —— 不给的话子页是 opaque origin，<code>localStorage</code> 直接抛异常，历史记录每次刷新都丢。</li>
+  <li><code>allow-modals</code> <b>可以不给</b> —— 本对话框的删除确认、附件输入都用内部自研弹层，不依赖 <code>window.confirm</code> / <code>prompt</code>。</li>
+  <li><code>allow="clipboard-write"</code> <b>建议给</b> —— 不给的话消息下方的「复制」按钮走不了标准 Clipboard API，会退到 <code>execCommand</code> 兜底路径（仍能复制成功，但多一层兜底总是更稳）。</li>
+</ul>
+<div class="box">
+  <iframe
+    id="chat"
+    sandbox="allow-scripts allow-same-origin"
+    allow="clipboard-write"
+    src="/?embed=1&agent=service&new=1"
+    title="智能体对话"
+  ></iframe>
+</div>
+</body>
+</html>

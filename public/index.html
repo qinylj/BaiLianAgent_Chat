@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="cockpit">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>智能体对话</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="bg-layer" id="bgLayer"></div>
+<div class="bg-veil" id="bgVeil"></div>
+
+<div class="app" id="app">
+  <!-- ============ 左侧栏 ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">AI</div>
+      <div class="brand-text">
+        <!-- 标题由 app.js 的 updateBrandTitle() 按「实际能对话的对象」自适应：
+             只有大模型 → 大模型对话；只有智能体 → 智能体对话；两者都有 / 都没有 → AI对话。
+             这里的首屏文字写**中性默认值**，免得在只有大模型的部署里闪一下「智能体对话」。 -->
+        <strong id="brandTitle">AI对话</strong>
+        <span id="brandSub">智能体调用控制台</span>
+      </div>
+      <!-- 打开抽屉（背景 / 链接参数 / 设置）的唯一入口，三个面板在抽屉顶部的切页里。
+           必须常显：侧栏底部原来那排按钮已经删掉，这里再隐藏就没有入口了。
+           品牌区**只放这一枚**图标 —— 侧栏的收起 / 展开统一由主区顶栏的 ☰ 负责，
+           品牌区里再摆一枚同功能的箭头，跟这枚并排看就是两个图标挤在一起，纯属冗余。 -->
+      <button class="icon-btn brand-settings" id="btnOpenSettings" title="设置" aria-label="设置">⚙</button>
+    </div>
+
+    <!-- 大模型分组：与「智能体」「历史对话」平级，三块按 1.5:3.5:5 分高度。
+         整组（小标题 + 列表）的显隐挂 .sidebar 上的 data-hide-models 控制，见 css。
+         两个条件同时满足才显示：① models.json 里至少配了一个模型；
+         ② settings.json 的 ui.showModels 为 true，**或**链接里显式带了 ?model=。
+         （第二个条件里的「或」就是需求要的：配置里默认关掉，但链接点名了仍要显示出来。）
+         app.js 的 applyRegions() 是唯一判定处。 -->
+    <div class="section-title" data-region="models">
+      <span>大模型</span>
+      <span class="pill" id="modelCount">0</span>
+    </div>
+    <div class="list-wrap wrap-models" data-region="models">
+      <div class="model-list" id="modelList"></div>
+    </div>
+
+    <div class="section-title" data-region="agents">
+      <span>智能体</span>
+      <span class="pill" id="agentCount">0</span>
+    </div>
+    <div class="list-wrap wrap-agents" data-region="agents">
+      <div class="agent-list" id="agentList"></div>
+    </div>
+
+    <div class="section-title">
+      <span>历史对话</span>
+      <button class="mini-btn" id="btnNewConv" title="新建对话">＋ 新建</button>
+    </div>
+    <div class="list-wrap wrap-convs">
+      <div class="conv-list" id="convList"></div>
+    </div>
+  </aside>
+
+  <!-- ============ 主区域 ============ -->
+  <main class="main">
+    <header class="topbar">
+      <!-- 侧栏开关。**不能带 only-mobile**：它曾是 only-mobile，
+           于是宽屏下侧栏根本没法收起来（详见 css 里 .only-mobile 那段）。
+           aria-expanded 由 app.js 的 setSidebarCollapsed() 同步。 -->
+      <button class="icon-btn" id="btnToggleSidebar" title="收起 / 展开侧栏" aria-label="收起或展开侧栏" aria-expanded="true">☰</button>
+      <div class="agent-badge" id="agentBadge">
+        <!-- 首屏占位：图标由 renderAgentBadge() 用 agent-icons.js 的内联 SVG 填入（留空即可，
+             不在这里再内联一份图标，免得跟 agent-icons.js 里的设计稿不同步） -->
+        <div class="avatar"></div>
+        <div class="meta">
+          <strong id="curAgentName">—</strong>
+          <span id="curSessionId">未建立会话</span>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span class="conn" id="connState" data-state="idle">就绪</span>
+        <button class="ghost-btn" id="btnStop" disabled>■ 停止</button>
+        <button class="ghost-btn" id="btnExport" title="导出当前对话">⤓ 导出</button>
+      </div>
+    </header>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="composer-wrap">
+      <div class="attach-bar" id="attachBar" hidden></div>
+      <div class="params-bar" id="paramsBar" hidden></div>
+      <div class="composer">
+        <!-- 附件按钮：按需求常隐（CSS 里 #btnAttach{display:none}），节点与弹层逻辑保留，
+             要恢复入口删掉那条 CSS 即可 -->
+        <button class="icon-btn" id="btnAttach" title="添加附件 URL">📎</button>
+        <textarea id="input" rows="1" placeholder="输入消息，Enter 发送 / Shift+Enter 换行"></textarea>
+        <button class="send-btn" id="btnSend" title="发送">➤</button>
+      </div>
+      <div class="composer-tip">
+        <span id="tipText">Enter 发送 · Shift+Enter 换行</span>
+        <span id="tokenHint"></span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ============ 右侧抽屉 ============ -->
+<div class="drawer-mask" id="drawerMask" hidden></div>
+<aside class="drawer" id="drawer" hidden>
+  <div class="drawer-head">
+    <div class="tabs">
+      <button class="tab active" data-tab="bg">背景</button>
+      <button class="tab" data-tab="params">链接参数</button>
+      <button class="tab" data-tab="settings">设置</button>
+    </div>
+    <button class="icon-btn" id="btnCloseDrawer">✕</button>
+  </div>
+
+  <!-- 背景 -->
+  <section class="drawer-body" data-panel="bg">
+    <div class="field">
+      <label>预设背景</label>
+      <div class="bg-grid" id="bgGrid"></div>
+    </div>
+    <div class="field">
+      <label>自定义图片</label>
+      <div class="row">
+        <button class="ghost-btn" id="btnPickBg">选择图片…</button>
+        <button class="ghost-btn danger" id="btnClearBg">清除</button>
+        <input type="file" id="bgFile" accept="image/*" hidden />
+      </div>
+      <p class="hint">支持拖拽图片到聊天区域直接设为背景。图片保存在本地浏览器，最大 4MB。</p>
+    </div>
+    <div class="field">
+      <label>图片遮罩 <b id="veilVal">45%</b></label>
+      <input type="range" id="veilRange" min="0" max="95" value="45" />
+    </div>
+    <div class="field">
+      <label>背景模糊 <b id="blurVal">0px</b></label>
+      <input type="range" id="blurRange" min="0" max="24" value="0" />
+    </div>
+    <div class="field">
+      <label>主题</label>
+      <div class="seg" id="themeSeg">
+        <button data-theme="cockpit">驾驶舱</button>
+        <button data-theme="dark">深色</button>
+        <button data-theme="light">浅色</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 链接参数 -->
+  <section class="drawer-body" data-panel="params" hidden>
+    <div class="field">
+      <label>本次由链接传入的参数</label>
+      <div class="param-list" id="paramList"><p class="hint">当前没有链接参数。</p></div>
+    </div>
+    <div class="field">
+      <label>手动补充参数</label>
+      <div class="kv-add">
+        <input type="text" id="kvKey" placeholder="key" />
+        <input type="text" id="kvVal" placeholder="value" />
+        <button class="ghost-btn" id="btnAddKv">添加</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>当前链接（可直接复制分享）</label>
+      <div class="link-box"><code id="shareLink">—</code></div>
+      <div class="row">
+        <button class="ghost-btn" id="btnCopyLink">复制链接</button>
+        <button class="ghost-btn" id="btnApplyLink">用当前设置刷新链接</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>拼装后的实际提问预览</label>
+      <pre class="preview" id="promptPreview">—</pre>
+    </div>
+  </section>
+
+  <!-- 设置 -->
+  <section class="drawer-body" data-panel="settings" hidden>
+    <div class="field">
+      <label>服务端</label>
+      <div class="kv"><span>模式</span><b id="setMode">—</b></div>
+      <div class="kv"><span>网关地址</span><b id="setBase" class="ellipsis">—</b></div>
+      <div class="kv"><span>APP_KEY</span><b id="setKey">—</b></div>
+      <p class="hint">网关地址与 APP_KEY 在 <code>config/settings.json</code> 修改，或设置环境变量 <code>AGENT_BASE_URL</code> / <code>AGENT_APP_KEY</code> 后重启服务。</p>
+    </div>
+    <div class="field">
+      <label>调用参数</label>
+      <label class="check"><input type="checkbox" id="optStream" checked /> 流式输出 stream</label>
+      <label class="check"><input type="checkbox" id="optDelta" checked /> 增量返回 delta</label>
+      <label class="check"><input type="checkbox" id="optTrace" checked /> 返回思考链路 trace</label>
+    </div>
+    <div class="field">
+      <label>历史存储</label>
+      <label class="check"><input type="checkbox" id="optServerHistory" checked /> 同时保存到服务端 data/history</label>
+      <div class="row">
+        <button class="ghost-btn" id="btnImport">导入 JSON</button>
+        <button class="ghost-btn danger" id="btnClearAll">清空全部对话</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" hidden />
+    </div>
+    <div class="field">
+      <label>工具异步回调地址（配到百炼工具里）</label>
+      <div class="link-box"><code id="callbackUrl">—</code></div>
+      <p class="hint">外部工具执行完成后，回调该地址即可把结果交回智能体。请求体：<code>{"taskId":"…","success":true,"data":"{\"result\":\"…\"}"}</code></p>
+    </div>
+  </section>
+</aside>
+
+<div class="toast" id="toast" hidden></div>
+
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>

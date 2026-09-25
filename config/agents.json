@@ -1,0 +1,97 @@
+{
+  "default": "service",
+  "agents": [
+    {
+      "id": "service",
+      "name": "防汛事件处置建议",
+      "agentCode": "",
+      "agentVersion": "",
+      "apiKey": "",
+      "avatar": "🌊",
+      "icon": "flood",
+      "accent": "#22c55e",
+      "description": "生成对应事件的处置建议方案",
+      "welcome": "您好，这里是防汛事件处置建议，请描述需要处置的事件情况。",
+      "suggestions": [
+        "当前汛情该如何处置？",
+        "生成一份处置建议方案",
+        "有哪些风险点需要重点防范？"
+      ],
+      "urlTemplate": "",
+      "defaultParams": {
+        "biz": "咨询防汛相关的内容"
+      },
+      "background": "aurora"
+    },
+    {
+      "id": "report",
+      "name": "防汛事件评价复盘",
+      "agentCode": "",
+      "agentVersion": "",
+      "apiKey": "",
+      "avatar": "📊",
+      "icon": "floodReport",
+      "accent": "#f59e0b",
+      "description": "生成对应事件的评价复盘报告",
+      "welcome": "把需要复盘的事件经过与处置情况告诉我，我来生成评价复盘报告。",
+      "suggestions": [
+        "生成这次事件的复盘报告",
+        "本次处置存在哪些不足？",
+        "如何改进应急预案？"
+      ],
+      "background": "grid"
+    },
+    {
+      "id": "code",
+      "name": "水污染事件处置建议",
+      "agentCode": "e36a0ab1-b673-49d0-9a2c-000000000004",
+      "agentVersion": "",
+      "avatar": "💧",
+      "icon": "water",
+      "accent": "#a855f7",
+      "description": "生成对应事件的处置建议方案",
+      "welcome": "描述水污染事件的经过与监测情况，我来生成处置建议方案。",
+      "suggestions": [
+        "这起水污染事件该如何处置？",
+        "生成一份处置建议方案",
+        "需要采取哪些应急措施？"
+      ],
+      "background": "paper"
+    },
+    {
+      "id": "water-trace",
+      "name": "水污染事件辅助溯源",
+      "status": "建设中",
+      "agentCode": "e36a0ab1-b673-49d0-9a2c-000000000005",
+      "agentVersion": "",
+      "avatar": "🔍",
+      "icon": "trace",
+      "accent": "#06b6d4",
+      "description": "调取相关数据开展污染溯源",
+      "welcome": "描述需要溯源的水污染事件信息（发生时间、地点、污染物类型等），我来调取相关数据开展污染溯源。",
+      "suggestions": [
+        "这起污染事件的源头可能在哪里？",
+        "调取监测数据开展溯源分析",
+        "还需要补充哪些溯源材料？"
+      ],
+      "background": "topo"
+    },
+    {
+      "id": "water-review",
+      "name": "水污染事件评价复盘",
+      "agentCode": "e36a0ab1-b673-49d0-9a2c-000000000006",
+      "agentVersion": "",
+      "avatar": "📋",
+      "icon": "waterReport",
+      "accent": "#ec4899",
+      "description": "生成对应事件的评价复盘报告",
+      "welcome": "把水污染事件的经过与处置情况告诉我，我来生成评价复盘报告。",
+      "suggestions": [
+        "生成这次水污染事件的复盘报告",
+        "本次处置存在哪些不足？",
+        "如何改进水污染应急预案？"
+      ],
+      "background": "mesh"
+    }
+  ]
+}

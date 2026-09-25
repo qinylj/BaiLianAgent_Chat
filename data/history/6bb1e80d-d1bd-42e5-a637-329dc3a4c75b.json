@@ -1,0 +1,42 @@
+{
+  "id": "6bb1e80d-d1bd-42e5-a637-329dc3a4c75b",
+  "title": "你是谁",
+  "agentId": "general",
+  "sessionId": "",
+  "createdAt": 1790329077856,
+  "updatedAt": 1790330878008,
+  "messages": [
+    {
+      "id": "7ee008d0-0cb7-4156-afc3-1254ba3efce4",
+      "role": "user",
+      "text": "你是谁",
+      "thought": "",
+      "images": [],
+      "params": {},
+      "attachments": [],
+      "requestId": "",
+      "taskId": "",
+      "messageId": "",
+      "vote": "",
+      "status": "ok",
+      "ts": 1790329087007,
+      "displayText": "你是谁"
+    },
+    {
+      "id": "974f22b9-02a3-49a6-98fc-c9312347935d",
+      "role": "assistant",
+      "text": "我是一个人工智能助手，可以帮你解答问题、整理信息、提供建议等。有什么需要帮忙的吗？",
+      "thought": "我们需要回答用户“你是谁”。需要简洁准确。我们是一个AI助手？根据系统提示，没有具体名字，但可以说明是AI助手。语言中文。可以答：我是AI助手，可以帮你回答问题、处理信息等。注意不要过度。用户问“你是谁”。应该直接回答。可以提到由谁开发？没有指定，但通常可以说我是人工智能助手。不要虚构。最好说：我是一个人工智能助手，由你当前使用的平台提供。可以帮你解答问题。保持简洁。",
+      "images": [],
+      "params": {},
+      "attachments": [],
+      "requestId": "",
+      "taskId": "",
+      "messageId": "",
+      "vote": "",
+      "status": "ok",
+      "ts": 1790329087007
+    }
+  ],
+  "kind": "model"
+}

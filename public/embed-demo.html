@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>iframe 嵌入示例 · 宿主页面</title>
+<style>
+  :root {
+    --bg: #0b0d13; --panel: #12151d; --panel2: #171b25;
+    --border: rgba(255,255,255,.1); --text: #e9ecf3; --dim: #98a1b1; --faint: #6b7383;
+    --accent: #4f8cff; --ok: #22c55e; --danger: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+    font: 14px/1.6 'PingFang SC','Microsoft YaHei','Segoe UI',system-ui,sans-serif;
+    display: grid; grid-template-columns: minmax(320px, 1fr) minmax(300px, 420px);
+    gap: 16px; padding: 16px;
+  }
+  h1 { font-size: 16px; margin: 0 0 4px; }
+  .sub { color: var(--faint); font-size: 12px; margin: 0 0 12px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+  .chat-host { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  #frameBox {
+    flex: 1; min-height: 420px; border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; background: #0f1117;
+  }
+  #frameBox.auto { min-height: 0; height: auto; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  button, select, input {
+    font: inherit; font-size: 12px; color: var(--text); background: var(--panel2);
+    border: 1px solid var(--border); border-radius: 9px; padding: 7px 10px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  input { cursor: text; flex: 1; min-width: 140px; }
+  code, pre { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; }
+  .url { word-break: break-all; color: var(--dim); background: var(--panel2); padding: 8px 10px; border-radius: 9px; }
+  #log { height: 300px; overflow-y: auto; background: #0d0f16; border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+  .ev { padding: 3px 0; border-bottom: 1px dashed rgba(255,255,255,.06); }
+  .ev b { color: var(--accent); }
+  .ev.up b { color: var(--ok); }
+  .ev.dn b { color: #f59e0b; }
+  .ev span { color: var(--dim); }
+  .tip { color: var(--faint); font-size: 11.5px; }
+  .kbd { background: #222735; border-radius: 4px; padding: 0 4px; }
+  @media (max-width: 900px) { body { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<!-- ============ 左：被嵌入的对话框 ============ -->
+<div class="chat-host">
+  <div class="card">
+    <h1>宿主页面（模拟业务系统）</h1>
+    <p class="sub">下面这块区域就是一个 <code>&lt;iframe&gt;</code>，里面装着智能体对话框。</p>
+    <div class="row">
+      <input id="q" placeholder="输入要问智能体的话…" value="我的业务办到哪一步了？" />
+      <button id="btnAsk">ask 提问</button>
+      <button id="btnStop">stop 终止</button>
+      <button id="btnClear">clear 新建会话</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <select id="agent"></select>
+      <select id="bg">
+        <option value="">默认背景</option>
+        <option value="midnight">午夜</option>
+        <option value="aurora">极光</option>
+        <option value="mesh">网格渐变</option>
+        <option value="grid">网格线</option>
+        <option value="plain">纯色</option>
+      </select>
+      <button id="btnLight">浅色</button>
+      <button id="btnDark">深色</button>
+      <button id="btnSidebar">收起侧栏</button>
+      <button id="btnMode">切到 auto 自适应高度</button>
+    </div>
+    <div class="url" id="url" style="margin-top:10px">—</div>
+    <p class="tip" style="margin:10px 0 0">
+      宿主监听 <code>message</code> 事件即可拿到 <span class="kbd">ready / user-message / delta / reply / error / height</span>；
+      反向用 <span class="kbd">postMessage</span> 下发 <span class="kbd">ask / set-params / set-agent / set-visual / set-sidebar / stop / clear</span>。
+      侧栏默认展开，也可以在 iframe 的 <code>src</code> 上加 <code>&amp;sidebar=0</code> 让它一开始就收起。
+    </p>
+  </div>
+  <div id="frameBox"></div>
+</div>
+
+<!-- ============ 右：消息日志 ============ -->
+<div class="card chat-host">
+  <div class="row" style="justify-content:space-between">
+    <h1 style="margin:0">通信日志</h1>
+    <button id="btnClearLog">清空日志</button>
+  </div>
+  <p class="sub" style="margin:6px 0 10px">
+    绿色箭头 = 子页 → 宿主；橙色箭头 = 宿主 → 子页。
+  </p>
+  <div id="log"></div>
+  <div class="card" style="background:var(--panel2);margin-top:12px">
+    <div class="sub" style="margin:0 0 6px">最后一次回答（宿主业务可直接用这块内容）</div>
+    <pre id="lastReply" style="margin:0;white-space:pre-wrap;max-height:160px;overflow:auto;color:var(--dim)">（等待回复…）</pre>
+  </div>
+</div>
+
+<script type="module">
+import { mountAgentChat } from '/js/embed.js';
+
+const $ = (id) => document.getElementById(id);
+const logBox = $('log');
+
+function log(dir, type, payload) {
+  const d = document.createElement('div');
+  d.className = `ev ${dir}`;
+  const mark = dir === 'up' ? '▲' : dir === 'dn' ? '▼' : '·';
+  const b = document.createElement('b');
+  b.textContent = `${mark} ${type}`;
+  const s = document.createElement('span');
+  // 必须用 textContent：智能体回复是不可信内容，拼 HTML 会打到宿主页上
+  s.textContent = ' ' + JSON.stringify(payload).slice(0, 260);
+  d.append(b, s);
+  logBox.prepend(d);
+  if (logBox.children.length > 200) logBox.lastChild.remove();
+}
+
+/* ---- 1) 一行接入：把 iframe 挂到容器里 ---- */
+const chat = mountAgentChat($('frameBox'), {
+  base: location.origin + '/',
+  embed: '1',
+  q: '我的业务办到哪一步了？',
+  params: { user: '张三', phone: '13800001111', biz: '社保转移', dept: '业务处' },
+  bg: 'aurora',
+});
+
+$('url').textContent = chat.iframe.src;
+
+/* ---- 2) 监听子页事件 ---- */
+chat.ready.then((s) => {
+  log('up', 'ready', s);
+  const sel = $('agent');
+  sel.innerHTML = '';
+  for (const a of s.agents || []) {
+    const o = document.createElement('option');
+    o.value = a.id;
+    o.textContent = a.name;
+    sel.appendChild(o);
+  }
+  sel.value = s.agentId || '';
+  if (s.storage !== 'localStorage') {
+    log('', '警告', { message: '子页存储不可用，历史不会持久化（' + s.storage + '）' });
+  }
+});
+
+['user-message', 'thought', 'reply', 'error', 'state', 'command-done'].forEach((t) =>
+  chat.on(t, (p) => {
+    log('up', t, p);
+    if (t === 'reply') $('lastReply').textContent = p.text || '（空）';
+  })
+);
+
+// delta 太密集，单独节流显示
+let deltaCount = 0;
+chat.on('delta', (p) => {
+  deltaCount++;
+  if (deltaCount % 12 === 0) log('up', `delta ×${deltaCount}`, { accumulated: (p.accumulated || '').slice(-40) });
+});
+
+/* ---- 3) 宿主下发命令 ---- */
+const send = (type, payload) => {
+  const id = chat.send(type, payload);
+  log('dn', type, { ...payload, id });
+};
+
+$('btnAsk').onclick = () => send('ask', { text: $('q').value, params: { from: '宿主按钮' } });
+$('btnStop').onclick = () => send('stop', {});
+$('btnClear').onclick = () => send('clear', {});
+$('agent').onchange = (e) => send('set-agent', { agentId: e.target.value });
+$('bg').onchange = (e) => e.target.value && send('set-visual', { bg: e.target.value });
+$('btnLight').onclick = () => send('set-visual', { theme: 'light', veil: 70 });
+$('btnDark').onclick = () => send('set-visual', { theme: 'dark', veil: 45 });
+$('btnClearLog').onclick = () => (logBox.innerHTML = '');
+
+/* ---- 3.1) 侧栏显隐：等价于 postMessage { type:'set-sidebar' } ---- */
+let sidebarCollapsed = false;
+$('btnSidebar').onclick = () => {
+  sidebarCollapsed = !sidebarCollapsed;
+  send('set-sidebar', { collapsed: sidebarCollapsed });
+  $('btnSidebar').textContent = sidebarCollapsed ? '展开侧栏' : '收起侧栏';
+};
+
+/* ---- 4) 在 compact / auto 两种高度模式间切换 ---- */
+let auto = false;
+$('btnMode').onclick = () => {
+  auto = !auto;
+  $('btnMode').textContent = auto ? '切回 compact 填满容器' : '切到 auto 自适应高度';
+  $('frameBox').classList.toggle('auto', auto);
+  const u = new URL(chat.iframe.src);
+  u.searchParams.set('embed', auto ? 'auto' : '1');
+  u.searchParams.delete('q'); // 切换模式别重复提问
+  u.searchParams.set('autosend', '0');
+  chat.iframe.src = u.toString();
+  $('url').textContent = u.toString();
+};
+
+/* ---- 5) auto 模式下按子页上报的高度撑开容器 ---- */
+chat.on('height', (p) => {
+  if (auto) $('frameBox').style.height = `${Math.max(p.height || 0, 200)}px`;
+});
+</script>
+</body>
+</html>
