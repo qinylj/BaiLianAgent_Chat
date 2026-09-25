@@ -100,7 +100,7 @@ agent-chat/
 │     ├─ embed.js           # iframe 嵌入：环境识别 + postMessage 双向通信桥
 │     ├─ ui.js              # 确认框 / 表单弹层（替代 window.confirm / prompt）
 │     ├─ store.js           # localStorage 会话与设置持久化（不可用时降级内存）
-│     ├─ agent-icons.js     # 内联 SVG 图标（6 个智能体 + 大模型 chip + 用户头像，设计稿就在这个文件里）
+│     ├─ agent-icons.js     # 内联 SVG 图标（5 个智能体 + 大模型 chip + 用户头像，设计稿就在这个文件里）
 │     ├─ markdown.js        # 极简 Markdown 渲染（先转义后解析，防 XSS）
 │     └─ backgrounds.js     # 10 套内置背景预设
 └─ data/history/            # 服务端会话存档（自动创建）
