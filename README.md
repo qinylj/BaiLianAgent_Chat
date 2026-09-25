@@ -4,6 +4,8 @@
 
 零依赖（仅需 Node.js ≥ 20），无需构建步骤。
 
+<img width="2252" height="1397" alt="image" src="https://github.com/user-attachments/assets/09fc5bfd-31f5-4bbe-87fa-84312d01e2ac" />
+
 ---
 
 ## 一、快速开始
